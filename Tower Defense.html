@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fortress Defense - Tower Defense Game</title>
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .game-info-page {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        /* Header Styles */
+        .game-header {
+            background-color: #2563eb;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .game-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .tab-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border-radius: 5px;
+        }
+
+        .tab-btn.active,
+        .tab-btn:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            padding: 20px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section-title {
+            color: #2563eb;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Overview Section */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .game-description {
+            line-height: 1.8;
+        }
+
+        .overview-highlights {
+            display: grid;
+            gap: 15px;
+        }
+
+        .highlight {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .highlight:hover {
+            transform: scale(1.02);
+        }
+
+        .highlight h3 {
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+
+        /* Towers Section */
+        .towers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .tower-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .tower-card:hover {
+            transform: scale(1.02);
+        }
+
+        .tower-name {
+            color: #2563eb;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .tower-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        /* Features Section */
+        .features-list {
+            list-style-type: none;
+        }
+
+        .features-list li {
+            background-color: #f9f9f9;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .features-list li:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Maps Section */
+        .maps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .map {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .map:hover {
+            transform: scale(1.02);
+        }
+
+        .map h3 {
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+
+        .map.forest { background-color: #ecfdf5; }
+        .map.desert { background-color: #fef3c7; }
+        .map.mountain { background-color: #eff6ff; }
+
+        /* Footer Styles */
+        .game-footer {
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 15px;
+            color: #666;
+        }
+
+        /* Responsive Design */
+        @media screen and (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+
+            .overview-grid,
+            .maps-grid,
+            .towers-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-info-page">
+            <header class="game-header">
+                <h1>Fortress Defense</h1>
+                <nav class="tabs">
+                    <button class="tab-btn active" onclick="showTab('overview')">Overview</button>
+                    <button class="tab-btn" onclick="showTab('towers')">Towers</button>
+                    <button class="tab-btn" onclick="showTab('features')">Features</button>
+                    <button class="tab-btn" onclick="showTab('maps')">Maps</button>
+                </nav>
+            </header>
+
+            <main class="main-content">
+                <section id="overview" class="tab-content active">
+                    <h2 class="section-title">Game Overview</h2>
+                    <div class="overview-grid">
+                        <p class="game-description">
+                            Fortress Defense is an intense tower defense strategy game where you must protect your base 
+                            from waves of increasingly challenging enemies. Build, upgrade, and strategically place 
+                            your towers to create the ultimate defensive line and prevent enemies from reaching your core.
+                        </p>
+                        <div class="overview-highlights">
+                            <div class="highlight objective">
+                                <h3>Objective</h3>
+                                <p>Survive increasingly difficult enemy waves by strategically placing towers.</p>
+                            </div>
+                            <div class="highlight strategy">
+                                <h3>Strategy</h3>
+                                <p>Manage resources, upgrade towers, and adapt to changing enemy compositions.</p>
+                            </div>
+                            <div class="highlight progression">
+                                <h3>Progression</h3>
+                                <p>Unlock new tower types and map challenges as you improve your skills.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="towers" class="tab-content">
+                    <h2 class="section-title">Tower Types</h2>
+                    <div class="towers-grid" id="towersContainer">
+                        <div class="tower-card">
+                            <h3 class="tower-name">Archer Tower</h3>
+                            <p>Fast-firing ranged unit effective against light enemies.</p>
+                            <div class="tower-details">
+                                <div><strong>Damage:</strong> Medium</div>
+                                <div><strong>Range:</strong> Long</div>
+                                <div><strong>Special:</strong> Rapid fire mode</div>
+                            </div>
+                        </div>
+                        <div class="tower-card">
+                            <h3 class="tower-name">Cannon Tower</h3>
+                            <p>Powerful area damage tower that deals massive damage to grouped enemies.</p>
+                            <div class="tower-details">
+                                <div><strong>Damage:</strong> High</div>
+                                <div><strong>Range:</strong> Medium</div>
+                                <div><strong>Special:</strong> Splash damage</div>
+                            </div>
+                        </div>
+                        <div class="tower-card">
+                            <h3 class="tower-name">Magic Tower</h3>
+                            <p>Magical tower that deals elemental damage and can slow enemies.</p>
+                            <div class="tower-details">
+                                <div><strong>Damage:</strong> Low-Medium</div>
+                                <div><strong>Range:</strong> Long</div>
+                                <div><strong>Special:</strong> Elemental effects</div>
+                            </div>
+                        </div>
+                        <div class="tower-card">
+                            <h3 class="tower-name">Tesla Tower</h3>
+                            <p>Electrical tower that chains damage between multiple enemies.</p>
+                            <div class="tower-details">
+                                <div><strong>Damage:</strong> Medium</div>
+                                <div><strong>Range:</strong> Short</div>
+                                <div><strong>Special:</strong> Chain lightning</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="features" class="tab-content">
+                    <h2 class="section-title">Game Features</h2>
+                    <ul class="features-list">
+                        <li>Multiple unique maps with varying terrain</li>
+                        <li>Upgradeable towers with multiple evolution paths</li>
+                        <li>Dynamic enemy types and behaviors</li>
+                        <li>Complex resource management</li>
+                        <li>Challenging wave-based combat system</li>
+                    </ul>
+                </section>
+
+                <section id="maps" class="tab-content">
+                    <h2 class="section-title">Map Environments</h2>
+                    <div class="maps-grid">
+                        <div class="map forest">
+                            <h3>Forest Maze</h3>
+                            <p>Winding paths through dense forests with limited tower placement areas.</p>
+                        </div>
+                        <div class="map desert">
+                            <h3>Desert Stronghold</h3>
+                            <p>Open terrain with strategic high ground for tower positioning.</p>
+                        </div>
+                        <div class="map mountain">
+                            <h3>Mountain Pass</h3>
+                            <p>Narrow mountain paths with multiple enemy approach routes.</p>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="game-footer">
+                <p>© 2025 Fortress Defense. Build your ultimate defense strategy!</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all tab buttons
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            tabButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+
+            // Activate corresponding tab button
+            const activeButton = document.querySelector(`.tab-btn[onclick="showTab('${tabName}')"]`);
+            activeButton.classList.add('active');
+        }
+    </script>
+</body>
+</html>
