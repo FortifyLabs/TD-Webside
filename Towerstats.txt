@@ -1,6 +1,6 @@
 Tower:        |Cost:        |Range:        |Damage:    |Fire Rate:
 --------------------------------------------------------------------------------
 Starter Tower   |    100    |    2.5f    |    35    |    0.5 sek
-Sootgun            200        1.5f        50        1.5 sek
-Sniper            400        4.0f        40        3.0 sek
-Mashingun        500        3.0f        10        0.25 sek
+Sootgun              200         1.5f         50         1.5 sek
+Sniper               400         4.0f         40         3.0 sek
+Mashingun            500         3.0f         10         0.25 sek
