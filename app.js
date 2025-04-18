@@ -10,6 +10,9 @@ class FocusTimer {
             intervalId: null,
             currentTaskId: null
         };
+
+
+        // DOM-Elemente
         
         // DOM-Elemente abrufen
         this.timerDisplay = document.getElementById('timerDisplay');
