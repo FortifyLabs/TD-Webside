@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tower Defense Game</title>
+    <style>
+        body {
+
+
+            
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            overflow: hidden;
+        }
+        
+        .game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            margin: 20px auto;
+            background-color: #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .game-board {
+            width: 100%;
+            height: 80%;
+            position: relative;
+            background-color: #63a375;
+            overflow: hidden;
+        }
+        
+        .path {
+            position: absolute;
+            background-color: #a67c52;
+            height: 40px;
+        }
+        
+        .control-panel {
+            width: 100%;
+            height: 20%;
+            background-color: #555;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+        
+        .stats {
+            color: white;
+            font-size: 18px;
+        }
+        
+        .tower-options {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .tower-option {
+            width: 40px;
+            height: 40px;
+            background-color: #777;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .tower-option:hover {
+            background-color: #999;
+        }
+        
+        .tower {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 15px;
+            background-color: #3498db;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        .enemy {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            background-color: #e74c3c;
+            z-index: 5;
+        }
+        
+        .projectile {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 4px;
+            background-color: yellow;
+            z-index: 8;
+        }
+        
+        .health-bar {
+            position: absolute;
+            height: 4px;
+            background-color: limegreen;
+            top: -6px;
+            left: 0;
+        }
+        
+        .game-over, .level-complete {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 80%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .game-over h2, .level-complete h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-board" id="gameBoard"></div>
+        <div class="control-panel">
+            <div class="stats">
+                <div>Level: <span id="level">1</span></div>
+                <div>Leben: <span id="lives">10</span></div>
+                <div>Gold: <span id="gold">100</span></div>
+                <div>Welle: <span id="wave">0</span>/5</div>
+            </div>
+            <div class="tower-options">
+                <div class="tower-option" data-type="basic" data-cost="50">B</div>
+                <div class="tower-option" data-type="cannon" data-cost="100">C</div>
+                <div class="tower-option" data-type="sniper" data-cost="150">S</div>
+            </div>
+            <button id="startWave">Start Welle</button>
+        </div>
+        <div class="game-over">
+            <h2>Game Over</h2>
+            <button id="restartGame">Neu starten</button>
+        </div>
+        <div class="level-complete">
+            <h2>Level abgeschlossen!</h2>
+            <button id="nextLevel">Nächstes Level</button>
+        </div>
+    </div>
+
+    <script>
+        // Spiel-Konfiguration
+        const gameConfig = {
+            levels: [
+                {
+                    name: "Level 1",
+                    waves: 5,
+                    enemiesPerWave: 10,
+                    enemyHealth: 50,
+                    enemySpeed: 1,
+                    path: [
+                        { x: 0, y: 150, width: 200, height: 40 },
+                        { x: 200, y: 150, width: 40, height: 200 },
+                        { x: 200, y: 350, width: 400, height: 40 },
+                        { x: 600, y: 150, width: 40, height: 200 },
+                        { x: 600, y: 150, width: 200, height: 40 }
+                    ],
+                    startGold: 100
+                },
+                {
+                    name: "Level 2",
+                    waves: 5,
+                    enemiesPerWave: 15,
+                    enemyHealth: 80,
+                    enemySpeed: 1.2,
+                    path: [
+                        { x: 0, y: 100, width: 200, height: 40 },
+                        { x: 200, y: 100, width: 40, height: 150 },
+                        { x: 200, y: 250, width: 400, height: 40 },
+                        { x: 600, y: 100, width: 40, height: 150 },
+                        { x: 600, y: 100, width: 200, height: 40 }
+                    ],
+                    startGold: 150
+                },
+                {
+                    name: "Level 3",
+                    waves: 5,
+                    enemiesPerWave: 20,
+                    enemyHealth: 120,
+                    enemySpeed: 1.4,
+                    path: [
+                        { x: 0, y: 100, width: 100, height: 40 },
+                        { x: 100, y: 100, width: 40, height: 100 },
+                        { x: 100, y: 200, width: 300, height: 40 },
+                        { x: 400, y: 100, width: 40, height: 100 },
+                        { x: 400, y: 100, width: 300, height: 40 },
+                        { x: 700, y: 100, width: 40, height: 300 },
+                        { x: 400, y: 400, width: 300, height: 40 }
+                    ],
+                    startGold: 200
+                }
+            ],
+            towers: {
+                basic: { range: 100, damage: 20, fireRate: 1000, cost: 50, color: "#3498db" },
+                cannon: { range: 80, damage: 50, fireRate: 2000, cost: 100, color: "#8e44ad" },
+                sniper: { range: 200, damage: 100, fireRate: 3000, cost: 150, color: "#2ecc71" }
+            }
+        };
+
+        // Spiel-Status
+        let gameState = {
+            currentLevel: 0,
+            lives: 10,
+            gold: 100,
+            wave: 0,
+            towers: [],
+            enemies: [],
+            projectiles: [],
+            waveInProgress: false,
+            selectedTower: null,
+            enemiesSpawned: 0,
+            enemiesKilled: 0,
+            gameOver: false,
+            levelComplete: false
+        };
+
+        // DOM-Elemente
+        const gameBoard = document.getElementById('gameBoard');
+        const levelDisplay = document.getElementById('level');
+        const livesDisplay = document.getElementById('lives');
+        const goldDisplay = document.getElementById('gold');
+        const waveDisplay = document.getElementById('wave');
+        const startWaveButton = document.getElementById('startWave');
+        const gameOverScreen = document.querySelector('.game-over');
+        const levelCompleteScreen = document.querySelector('.level-complete');
+        const restartGameButton = document.getElementById('restartGame');
+        const nextLevelButton = document.getElementById('nextLevel');
+
+        // Event-Listener
+        startWaveButton.addEventListener('click', startWave);
+        restartGameButton.addEventListener('click', restartGame);
+        nextLevelButton.addEventListener('click', nextLevel);
+        gameBoard.addEventListener('click', placeSelectedTower);
+
+        document.querySelectorAll('.tower-option').forEach(option => {
+            option.addEventListener('click', () => {
+                selectTowerType(option.getAttribute('data-type'), parseInt(option.getAttribute('data-cost')));
+            });
+        });
+
+        // Initialisierung
+        initGame();
+
+        function initGame() {
+            resetGameState();
+            setupLevel(gameState.currentLevel);
+            renderGame();
+        }
+
+        function resetGameState() {
+            gameState = {
+                currentLevel: 0,
+                lives: 10,
+                gold: gameConfig.levels[0].startGold,
+                wave: 0,
+                towers: [],
+                enemies: [],
+                projectiles: [],
+                waveInProgress: false,
+                selectedTower: null,
+                enemiesSpawned: 0,
+                enemiesKilled: 0,
+                gameOver: false,
+                levelComplete: false
+            };
+
+            gameBoard.innerHTML = '';
+            updateUI();
+        }
+
+        function setupLevel(levelIndex) {
+            const level = gameConfig.levels[levelIndex];
+            gameState.gold = level.startGold;
+            gameState.wave = 0;
+            gameState.towers = [];
+            gameState.enemies = [];
+            gameState.projectiles = [];
+            gameState.waveInProgress = false;
+            gameState.enemiesSpawned = 0;
+            gameState.enemiesKilled = 0;
+            
+            // Pfad erstellen
+            gameBoard.innerHTML = '';
+            level.path.forEach(segment => {
+                const pathElement = document.createElement('div');
+                pathElement.className = 'path';
+                pathElement.style.left = segment.x + 'px';
+                pathElement.style.top = segment.y + 'px';
+                pathElement.style.width = segment.width + 'px';
+                pathElement.style.height = segment.height + 'px';
+                gameBoard.appendChild(pathElement);
+            });
+
+            levelDisplay.textContent = levelIndex + 1;
+            updateUI();
+        }
+
+        function renderGame() {
+            renderTowers();
+            renderEnemies();
+            renderProjectiles();
+            requestAnimationFrame(renderGame);
+        }
+
+        function renderTowers() {
+            gameState.towers.forEach(tower => {
+                if (!tower.element) {
+                    const towerElement = document.createElement('div');
+                    towerElement.className = 'tower';
+                    towerElement.style.left = tower.x - 15 + 'px';
+                    towerElement.style.top = tower.y - 15 + 'px';
+                    towerElement.style.backgroundColor = tower.color;
+                    towerElement.textContent = tower.type.charAt(0).toUpperCase();
+                    gameBoard.appendChild(towerElement);
+                    tower.element = towerElement;
+                }
+            });
+        }
+
+        function renderEnemies() {
+            gameState.enemies.forEach(enemy => {
+                if (!enemy.element) {
+                    const enemyElement = document.createElement('div');
+                    enemyElement.className = 'enemy';
+                    gameBoard.appendChild(enemyElement);
+                    
+                    const healthBar = document.createElement('div');
+                    healthBar.className = 'health-bar';
+                    healthBar.style.width = '20px';
+                    enemyElement.appendChild(healthBar);
+                    
+                    enemy.element = enemyElement;
+                    enemy.healthBar = healthBar;
+                }
+                
+                enemy.element.style.left = enemy.x - 10 + 'px';
+                enemy.element.style.top = enemy.y - 10 + 'px';
+                
+                // Aktualisiere Health Bar
+                const healthPercent = (enemy.health / enemy.maxHealth) * 100;
+                enemy.healthBar.style.width = (healthPercent * 20 / 100) + 'px';
+                
+                // Farbe der Health-Bar ändern basierend auf Gesundheit
+                if (healthPercent > 60) {
+                    enemy.healthBar.style.backgroundColor = 'limegreen';
+                } else if (healthPercent > 30) {
+                    enemy.healthBar.style.backgroundColor = 'yellow';
+                } else {
+                    enemy.healthBar.style.backgroundColor = 'red';
+                }
+            });
+        }
+
+        function renderProjectiles() {
+            gameState.projectiles.forEach(projectile => {
+                if (!projectile.element) {
+                    const projectileElement = document.createElement('div');
+                    projectileElement.className = 'projectile';
+                    gameBoard.appendChild(projectileElement);
+                    projectile.element = projectileElement;
+                }
+                
+                projectile.element.style.left = projectile.x - 4 + 'px';
+                projectile.element.style.top = projectile.y - 4 + 'px';
+            });
+        }
+
+        function updateGame() {
+            if (gameState.gameOver || gameState.levelComplete) return;
+            
+            moveEnemies();
+            updateTowers();
+            moveProjectiles();
+            checkWaveStatus();
+        }
+
+        function moveEnemies() {
+            gameState.enemies.forEach(enemy => {
+                const level = gameConfig.levels[gameState.currentLevel];
+                const path = level.path;
+                
+                // Bewege Feind entlang des Pfades
+                if (enemy.pathIndex < path.length) {
+                    const currentSegment = path[enemy.pathIndex];
+                    
+                    if (enemy.pathProgress === 0) {
+                        // Startposition auf dem Pfad-Segment
+                        if (enemy.pathIndex === 0) {
+                            enemy.x = currentSegment.x;
+                            enemy.y = currentSegment.y + currentSegment.height / 2;
+                            if (currentSegment.width > currentSegment.height) {
+                                enemy.direction = 'right';
+                            } else {
+                                enemy.direction = 'down';
+                            }
+                        } else {
+                            const prevSegment = path[enemy.pathIndex - 1];
+                            if (prevSegment.x === currentSegment.x) {
+                                // Vertikale Ausrichtung
+                                if (prevSegment.y < currentSegment.y) {
+                                    enemy.direction = 'down';
+                                } else {
+                                    enemy.direction = 'up';
+                                }
+                            } else {
+                                // Horizontale Ausrichtung
+                                if (prevSegment.x < currentSegment.x) {
+                                    enemy.direction = 'right';
+                                } else {
+                                    enemy.direction = 'left';
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Bewege basierend auf der Richtung
+                    switch (enemy.direction) {
+                        case 'right':
+                            enemy.x += enemy.speed;
+                            if (enemy.x >= currentSegment.x + currentSegment.width) {
+                                enemy.pathIndex++;
+                                enemy.pathProgress = 0;
+                            } else {
+                                enemy.pathProgress += enemy.speed;
+                            }
+                            break;
+                        case 'left':
+                            enemy.x -= enemy.speed;
+                            if (enemy.x <= currentSegment.x) {
+                                enemy.pathIndex++;
+                                enemy.pathProgress = 0;
+                            } else {
+                                enemy.pathProgress += enemy.speed;
+                            }
+                            break;
+                        case 'down':
+                            enemy.y += enemy.speed;
+                            if (enemy.y >= currentSegment.y + currentSegment.height) {
+                                enemy.pathIndex++;
+                                enemy.pathProgress = 0;
+                            } else {
+                                enemy.pathProgress += enemy.speed;
+                            }
+                            break;
+                        case 'up':
+                            enemy.y -= enemy.speed;
+                            if (enemy.y <= currentSegment.y) {
+                                enemy.pathIndex++;
+                                enemy.pathProgress = 0;
+                            } else {
+                                enemy.pathProgress += enemy.speed;
+                            }
+                            break;
+                    }
+                } else {
+                    // Feind hat das Ende erreicht
+                    enemy.reachedEnd = true;
+                    gameState.lives--;
+                    updateUI();
+                    
+                    if (gameState.lives <= 0) {
+                        gameOver();
+                    }
+                }
+            });
+            
+            // Entferne Feinde, die das Ziel erreicht haben
+            gameState.enemies = gameState.enemies.filter(enemy => {
+                if (enemy.reachedEnd) {
+                    if (enemy.element) {
+                        enemy.element.remove();
+                    }
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        function updateTowers() {
+            const now = Date.now();
+            
+            gameState.towers.forEach(tower => {
+                if (now - tower.lastFired >= tower.fireRate) {
+                    // Finde den nächsten Feind in Reichweite
+                    const enemiesInRange = gameState.enemies.filter(enemy => {
+                        const dx = enemy.x - tower.x;
+                        const dy = enemy.y - tower.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        return distance <= tower.range;
+                    });
+                    
+                    if (enemiesInRange.length > 0) {
+                        // Auf den ersten Feind in Reichweite schießen
+                        const target = enemiesInRange[0];
+                        tower.lastFired = now;
+                        fireProjectile(tower, target);
+                    }
+                }
+            });
+        }
+
+        function fireProjectile(tower, target) {
+            const projectile = {
+                x: tower.x,
+                y: tower.y,
+                targetId: target.id,
+                speed: 5,
+                damage: tower.damage
+            };
+            
+            gameState.projectiles.push(projectile);
+        }
+
+        function moveProjectiles() {
+            gameState.projectiles = gameState.projectiles.filter(projectile => {
+                // Finde das Ziel
+                const target = gameState.enemies.find(enemy => enemy.id === projectile.targetId);
+                
+                if (!target) {
+                    if (projectile.element) {
+                        projectile.element.remove();
+                    }
+                    return false;
+                }
+                
+                // Berechne Richtung zum Ziel
+                const dx = target.x - projectile.x;
+                const dy = target.y - projectile.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 5) {
+                    // Treffer
+                    target.health -= projectile.damage;
+                    
+                    if (target.health <= 0) {
+                        // Feind getötet
+                        gameState.gold += 10;
+                        gameState.enemiesKilled++;
+                        updateUI();
+                        
+                        target.element.remove();
+                        gameState.enemies = gameState.enemies.filter(e => e.id !== target.id);
+                    }
+                    
+                    if (projectile.element) {
+                        projectile.element.remove();
+                    }
+                    return false;
+                }
+                
+                // Bewege Projektil in Richtung Ziel
+                projectile.x += (dx / distance) * projectile.speed;
+                projectile.y += (dy / distance) * projectile.speed;
+                
+                return true;
+            });
+        }
+
+        function checkWaveStatus() {
+            if (gameState.waveInProgress) {
+                const level = gameConfig.levels[gameState.currentLevel];
+                
+                // Spawn-Timer für neue Feinde
+                const now = Date.now();
+                if (gameState.enemiesSpawned < level.enemiesPerWave && now - gameState.lastEnemySpawn >= 1000) {
+                    spawnEnemy();
+                    gameState.lastEnemySpawn = now;
+                }
+                
+                // Prüfe, ob Welle beendet ist
+                if (gameState.enemiesSpawned >= level.enemiesPerWave && gameState.enemies.length === 0) {
+                    gameState.waveInProgress = false;
+                    gameState.wave++;
+                    gameState.gold += 50; // Bonus für abgeschlossene Welle
+                    updateUI();
+                    
+                    // Prüfe, ob Level abgeschlossen ist
+                    if (gameState.wave >= level.waves) {
+                        levelComplete();
+                    } else {
+                        startWaveButton.disabled = false;
+                    }
+                }
+            }
+        }
+
+        function startWave() {
+            if (gameState.waveInProgress) return;
+            
+            gameState.waveInProgress = true;
+            gameState.enemiesSpawned = 0;
+            gameState.lastEnemySpawn = Date.now();
+            startWaveButton.disabled = true;
+            waveDisplay.textContent = (gameState.wave + 1) + "/" + gameConfig.levels[gameState.currentLevel].waves;
+            
+            // Starte Game Update Loop
+            if (!gameState.updateInterval) {
+                gameState.updateInterval = setInterval(updateGame, 16);
+            }
+        }
+
+        function spawnEnemy() {
+            const level = gameConfig.levels[gameState.currentLevel];
+            const enemy = {
+                id: Date.now() + Math.random(),
+                x: 0,
+                y: 0,
+                health: level.enemyHealth,
+                maxHealth: level.enemyHealth,
+                speed: level.enemySpeed,
+                pathIndex: 0,
+                pathProgress: 0,
+                direction: 'right'
+            };
+            
+            gameState.enemies.push(enemy);
+            gameState.enemiesSpawned++;
+        }
+
+        function selectTowerType(type, cost) {
+            if (gameState.gold >= cost) {
+                gameState.selectedTower = {
+                    type: type,
+                    cost: cost
+                };
+            } else {
+                alert('Nicht genug Gold!');
+            }
+        }
+
+        function placeSelectedTower(event) {
+            if (!gameState.selectedTower) return;
+            
+            const rect = gameBoard.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            // Prüfe, ob Position auf dem Pfad liegt
+            if (isOnPath(x, y)) {
+                alert('Türme können nicht auf dem Pfad platziert werden!');
+                return;
+            }
+            
+            // Prüfe, ob Position schon von einem Turm besetzt ist
+            if (isTowerAtPosition(x, y)) {
+                alert('Hier steht bereits ein Turm!');
+                return;
+            }
+            
+            // Platziere Turm
+            const towerConfig = gameConfig.towers[gameState.selectedTower.type];
+            const tower = {
+                type: gameState.selectedTower.type,
+                x: x,
+                y: y,
+                range: towerConfig.range,
+                damage: towerConfig.damage,
+                fireRate: towerConfig.fireRate,
+                lastFired: 0,
+                color: towerConfig.color
+            };
+            
+            gameState.towers.push(tower);
+            gameState.gold -= gameState.selectedTower.cost;
+            gameState.selectedTower = null;
+            updateUI();
+        }
+
+        function isOnPath(x, y) {
+            const level = gameConfig.levels[gameState.currentLevel];
+            const buffer = 10; // Puffer um den Pfad
+            
+            for (const segment of level.path) {
+                if (x >= segment.x - buffer && 
+                    x <= segment.x + segment.width + buffer && 
+                    y >= segment.y - buffer && 
+                    y <= segment.y + segment.height + buffer) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        function isTowerAtPosition(x, y) {
+            const radius = 30; // Mindestabstand zwischen Türmen
+            
+            for (const tower of gameState.towers) {
+                const dx = tower.x - x;
+                const dy = tower.y - y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < radius) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        function updateUI() {
+            levelDisplay.textContent = gameState.currentLevel + 1;
+            livesDisplay.textContent = gameState.lives;
+            goldDisplay.textContent = gameState.gold;
+            waveDisplay.textContent = gameState.wave + "/" + gameConfig.levels[gameState.currentLevel].waves;
+        }
+
+        function gameOver() {
+            gameState.gameOver = true;
+            clearInterval(gameState.updateInterval);
+            gameOverScreen.style.display = 'flex';
+        }
+
+        function levelComplete() {
+            gameState.levelComplete = true;
+            clearInterval(gameState.updateInterval);
+            
+            if (gameState.currentLevel < gameConfig.levels.length - 1) {
+                levelCompleteScreen.style.display = 'flex';
+            } else {
+                // Spiel komplett durchgespielt
+                levelCompleteScreen.querySelector('h2').textContent = 'Spiel gewonnen!';
+                levelCompleteScreen.querySelector('button').textContent = 'Neu starten';
+                levelCompleteScreen.style.display = 'flex';
+            }
+        }
+
+        function restartGame() {
+            gameOverScreen.style.display = 'none';
+            levelCompleteScreen.style.display = 'none';
+            clearInterval(gameState.updateInterval);
+            gameState.updateInterval = null;
+            initGame();
+        }
+
+        function nextLevel() {
+            levelCompleteScreen.style.display = 'none';
+            clearInterval(gameState.updateInterval);
+            gameState.updateInterval = null;
+            
+            if (gameState.currentLevel < gameConfig.levels.length - 1) {
+                gameState.currentLevel++;
+                setupLevel(gameState.currentLevel);
+            } else {
+                initGame();
+            }
+        }
+    </script>
+</body>
+</html>
