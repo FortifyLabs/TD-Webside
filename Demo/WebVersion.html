@@ -193,11 +193,11 @@
                     path: [
                         { x: 0, y: 150, width: 200, height: 40 },
                         { x: 200, y: 150, width: 40, height: 200 },
-                        { x: 200, y: 350, width: 400, height: 40 },
+                        { x: 200, y: 350, width: 440, height: 40 },
                         { x: 600, y: 150, width: 40, height: 200 },
                         { x: 600, y: 150, width: 200, height: 40 }
                     ],
-                    startGold: 100
+                    startGold: 150
                 },
                 {
                     name: "Level 2",
@@ -212,7 +212,7 @@
                         { x: 600, y: 100, width: 40, height: 150 },
                         { x: 600, y: 100, width: 200, height: 40 }
                     ],
-                    startGold: 150
+                    startGold: 200
                 },
                 {
                     name: "Level 3",
@@ -229,7 +229,24 @@
                         { x: 700, y: 100, width: 40, height: 300 },
                         { x: 400, y: 400, width: 300, height: 40 }
                     ],
-                    startGold: 200
+                    startGold: 230
+                },
+                {
+                    name: "Level 4",
+                    waves: 6,
+                    enemiesPerWave: 25,
+                    enemyHealth: 200,
+                    enemySpeed: 1.6,
+                    path: [
+                        { x: 0, y: 50, width: 150, height: 40 },
+                        { x: 150, y: 50, width: 40, height: 300 },
+                        { x: 150, y: 350, width: 400, height: 40 },
+                        { x: 550, y: 150, width: 40, height: 200 },
+                        { x: 550, y: 150, width: 200, height: 40 },
+                        { x: 750, y: 150, width: 40, height: 300 },
+                        { x: 550, y: 450, width: 200, height: 40 }
+                    ],
+                    startGold: 250
                 }
             ],
             towers: {
@@ -313,14 +330,15 @@
         function setupLevel(levelIndex) {
             const level = gameConfig.levels[levelIndex];
             gameState.gold = level.startGold;
-            gameState.wave = 0;
+            gameState.wave = 0; // Welle zurücksetzen
             gameState.towers = [];
             gameState.enemies = [];
             gameState.projectiles = [];
-            gameState.waveInProgress = false;
-            gameState.enemiesSpawned = 0;
-            gameState.enemiesKilled = 0;
-            
+            gameState.waveInProgress = false; // Sicherstellen, dass keine Welle aktiv ist
+            gameState.enemiesSpawned = 0; // Zurücksetzen der Feindanzahl
+            gameState.enemiesKilled = 0; // Zurücksetzen der getöteten Feinde
+            gameState.lastEnemySpawn = 0; // Zurücksetzen des Spawn-Timers
+
             // Pfad erstellen
             gameBoard.innerHTML = '';
             level.path.forEach(segment => {
@@ -601,43 +619,43 @@
         function checkWaveStatus() {
             if (gameState.waveInProgress) {
                 const level = gameConfig.levels[gameState.currentLevel];
-                
+
                 // Spawn-Timer für neue Feinde
                 const now = Date.now();
                 if (gameState.enemiesSpawned < level.enemiesPerWave && now - gameState.lastEnemySpawn >= 1000) {
                     spawnEnemy();
                     gameState.lastEnemySpawn = now;
                 }
-                
+
                 // Prüfe, ob Welle beendet ist
                 if (gameState.enemiesSpawned >= level.enemiesPerWave && gameState.enemies.length === 0) {
                     gameState.waveInProgress = false;
                     gameState.wave++;
                     gameState.gold += 50; // Bonus für abgeschlossene Welle
                     updateUI();
-                    
+
                     // Prüfe, ob Level abgeschlossen ist
                     if (gameState.wave >= level.waves) {
                         levelComplete();
                     } else {
-                        startWaveButton.disabled = false;
+                        startWaveButton.disabled = false; // Button aktivieren
                     }
                 }
             }
         }
 
         function startWave() {
-            if (gameState.waveInProgress) return;
-            
-            gameState.waveInProgress = true;
-            gameState.enemiesSpawned = 0;
-            gameState.lastEnemySpawn = Date.now();
-            startWaveButton.disabled = true;
+            if (gameState.waveInProgress) return; // Verhindert Start, wenn bereits eine Welle läuft
+
+            gameState.waveInProgress = true; // Welle starten
+            gameState.enemiesSpawned = 0; // Zurücksetzen der Spawn-Zählung
+            gameState.lastEnemySpawn = Date.now(); // Startzeitpunkt setzen
+            startWaveButton.disabled = true; // Button deaktivieren
             waveDisplay.textContent = (gameState.wave + 1) + "/" + gameConfig.levels[gameState.currentLevel].waves;
-            
+
             // Starte Game Update Loop
             if (!gameState.updateInterval) {
-                gameState.updateInterval = setInterval(updateGame, 16);
+                gameState.updateInterval = setInterval(updateGame, 16); // 60 FPS
             }
         }
 
@@ -645,8 +663,8 @@
             const level = gameConfig.levels[gameState.currentLevel];
             const enemy = {
                 id: Date.now() + Math.random(),
-                x: 0,
-                y: 0,
+                x: level.path[0].x,
+                y: level.path[0].y,
                 health: level.enemyHealth,
                 maxHealth: level.enemyHealth,
                 speed: level.enemySpeed,
@@ -654,7 +672,7 @@
                 pathProgress: 0,
                 direction: 'right'
             };
-            
+
             gameState.enemies.push(enemy);
             gameState.enemiesSpawned++;
         }
