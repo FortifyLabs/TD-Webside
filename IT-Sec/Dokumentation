@@ -1,1 +1,35 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\title{FortifyLabs Tower Defense Game}
+\author{Jonas Döring, Sebastian Bonhoff, Carl Henry Smolenski}
+\date{June 2025}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+Wir haben ein Tower Defense Game, basierend auf C# Programmiert.
+
+\section{Verwendete Sprachen}
+\begin{itemize}
+\item C#
+\item PHP
+\item HTML
+\item CSS
+\item JS
+\item Python
+\item HLSL
+\item C++
+\item GAP
+\item Objective C++
+\item Shader Lab
+\end{itemize}
+
+
+\section{Beschreibung}
+Unser Spiel Backend Kommuniziert mithilfe von PHP mit der Database
+
+\end{document}
 
